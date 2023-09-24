@@ -1,97 +1,136 @@
-# Задача 38: 
-# Дополнить телефонный справочник возможностью изменения и удаления данных. 
-# Пользователь также может ввести имя или фамилию,
-# и Вы должны реализовать функционал для изменения и удаления данных
+# Функция для добавления нового контакта в файл справочника
+def add_new_contact(filename, name, phone_number, comment):
+    if not name.strip() or not phone_number.strip():
+        print("Имя и номер телефона не могут быть пустыми. Контакт не будет добавлен.")
+        return
+    contacts = read_contacts(filename)
+    contacts[name] = {"phone_number": phone_number, "comment": comment}
+    write_contacts(filename, contacts)
+    print(f"Контакт {name} добавлен в справочник.")
 
-# Открываем файл в режиме чтения
-def show_data(filename):
-    print("\nПП | ФИО | Телефон")
-    with open(filename, "r", encoding="utf-8") as data:
-        print(data.read())
-    print("")
 
-# Добавляет информацию в файл
-def export_data(filename):
-    with open(filename, "r", encoding="utf-8") as data:
-        tel_file = data.read()
-    num = len(tel_file.split("\n"))
-    with open(filename, "a", encoding="utf-8") as data: 
-        fio = input("Введите ФИО: ")
-        phone_number = input("Введите номер телефона: ")
-        data.write(f"{num} | {fio} | {phone_number}\n")
-        print(f"Добавлена запись : {num} | {fio} | {phone_number}\n")
+# Функция для просмотра всех контактов из файла справочника
+def view_contacts(filename):
+    contacts = read_contacts(filename)
+    if contacts:
+        print("\nХороший выбор!")
+        print("\nВот кого удалось найти:")
+        for name, data in contacts.items():
+            print(f"Имя: {name}")
+            print(f'Номер телефона: {data["phone_number"]}')
+            print(f'Комментарий: {data["comment"]}')
+            print("-" * 30)
+    else:
+        print("Справочник пуст.")
 
-# Редактирует информацию в файле
-def edit_data(filename):
-    print("\nПП | ФИО | Телефон")
-    with open(filename, "r", encoding='utf-8') as data:
-        tel_book = data.read()
-    print(tel_book)
-    print("")
-    index_delete_data = int(input("Введите номер строки для редактирования: ")) - 1
-    tel_book_lines = tel_book.split("\n")
-    edit_tel_book_lines = tel_book_lines[index_delete_data]
-    elements = edit_tel_book_lines.split(" | ")
-    fio = input("Введите ФИО: ")
-    phone = input("Введите номер телефона: ")
-    num = elements[0]
-    if len(fio) == 0:
-        fio = elements[1]
-    if len(phone) == 0:
-        phone = elements[2]
-    edited_line = f"{num} | {fio} | {phone}"
-    tel_book_lines[index_delete_data] = edited_line
-    print(f"Запись - {edit_tel_book_lines}, изменена на - {edited_line}\n")
-    with open(filename, "w", encoding='utf-8') as f:
-        f.write("\n".join(tel_book_lines))
 
-# Удаляет информацию из файла
-def delete_data(filename):
-    print("\nПП | ФИО | Телефон")
-    with open(filename, "r", encoding="utf-8") as data:
-        tel_book = data.read()
-        print(tel_book)
-    print("")
-    index_delete_data = int(input("Введите номер строки для удаления: ")) - 1
-    tel_book_lines = tel_book.split("\n")
-    del_tel_book_lines = tel_book_lines[index_delete_data]
-    tel_book_lines.pop(index_delete_data)
-    print(f"Удалена запись: {del_tel_book_lines}\n")
-    with open(filename, "w", encoding='utf-8') as data:
-        data.write("\n".join(tel_book_lines))
+# Функция для удаления контакта по имени
+def delete_contact(filename, name):
+    contacts = read_contacts(filename)
+    if name in contacts:
+        del contacts[name]
+        write_contacts(filename, contacts)
+        print(f"Контакт {name} удален из справочника.")
+    else:
+        print(f"Контакт {name} не найден в справочнике.")
 
-# Основная функция
-def main():
-    my_choice = -1
-    file_tel = "tel.txt"
 
-    # Очистка файла при запуске
-    with open(file_tel, "a", encoding="utf-8") as file:
-         file.write("")
+# Функция для чтения контактов из файла справочника
+def read_contacts(filename):
+    contacts = {}
+    try:
+        with open(filename, "r", encoding="utf-8") as f:
+            for line in f:
+                parts = line.strip().split(" - ")
+                if len(parts) == 3:
+                    name, phone_number, comment = parts
+                    contacts[name] = {"phone_number": phone_number, "comment": comment}
+    except FileNotFoundError:
+        pass
+    return contacts
 
-    # Выбор действия пользователем
-    while my_choice != 0:
-        print("Выберите одно из действий:")
-        print("1 - Вывести инфо на экран")
-        print("2 - Произвести экпорт данных")
-        print("3 - Произвести изменение данных")
-        print("4 - Произвести удаление данных")
-        print("0 - Выход из программы")
-        action = int(input("Действие: "))
-        if action == 1:
-            show_data(file_tel)
-        elif action == 2:
-            export_data(file_tel)
-        elif action == 3:
-            edit_data(file_tel)
-        elif action == 4:
-            delete_data(file_tel)
+
+# Функция для записи контактов в файл справочника
+def write_contacts(filename, contacts):
+    with open(filename, "w", encoding="utf-8") as f:
+        for name, data in contacts.items():
+            f.write(f'{name} - {data["phone_number"]} - {data["comment"]}\n')
+
+
+# Функция для обновления существующего контакта в файле справочника
+def update_contact(filename, old_name, new_name, phone_number, comment):
+    contacts = read_contacts(filename)
+    if old_name in contacts:
+        updated_contact = {"phone_number": phone_number, "comment": comment}
+        if old_name != new_name:
+            del contacts[old_name]
+            contacts[new_name] = updated_contact
+            print(
+                f"Контакт {old_name} переименован в {new_name} и обновлен в справочнике."
+            )
         else:
-            my_choice = 0
+            contacts[old_name] = updated_contact
+            print(f"Контакт {old_name} обновлен в справочнике.")
+        write_contacts(filename, contacts)
+    else:
+        print(
+            f"Контакт {old_name} не найден в справочнике. Вы можете добавить новый контакт."
+        )
 
-    print("До свидания")
+
+# Главная функция
+def main():
+    filename = "contacts.txt"
+
+    while True:
+        print("\nПеред Вами справочник контактов! Что будете делать?")
+        print("Есть несколько действий на Ваш выбор:\n")
+        print("1. Добавить новый контакт")
+        print("2. Обновить существующий контакт")
+        print("3. Просмотреть все контакты")
+        print("4. Удалить контакт")
+        print("5. Сбежать!")
+
+        choice = input("\nВыберите действие: ")
+
+        if choice == "1":
+            print("\nКого добавляем?")
+            name = input("Введите имя: ")
+            phone_number = input("Введите номер телефона: ")
+            comment = input("Введите комментарий: ")
+            add_new_contact(filename, name, phone_number, comment)
+        elif choice == "2":
+            print("\nКого изменяем?")
+            old_name = input("Введите имя контакта для обновления: ")
+            new_name = input(
+                "Введите новое имя (или оставьте пустым, чтобы оставить без изменений): "
+            )
+            phone_number = input("Введите новый номер телефона: ")
+            comment = input("Введите новый комментарий: ")
+            if not new_name:
+                new_name = old_name
+            update_contact(filename, old_name, new_name, phone_number, comment)
+        elif choice == "3":
+            view_contacts(filename)
+        elif choice == "4":
+            print("\nКого удаляем?")
+            name = input("Введите имя контакта для удаления: ")
+            delete_contact(filename, name)
+        elif choice == "5":
+            confirm = input("Вы уверены, что хотите выйти? (y/n): ")
+            if confirm.lower() == "y" or confirm.lower() == "у":
+                print("Поздравляю, вы спаслись!")
+                print("Спасибо, что воспользовались справочником!")
+                break
+            else:
+                print("Неверный выбор. Пожалуйста, выберите снова.")
 
 
-# Запуск программы
+# Очистка консоли
+import os
+
+os.system("cls" if os.name == "nt" else "clear")
+
+# Вызов главного меню
 if __name__ == "__main__":
     main()
